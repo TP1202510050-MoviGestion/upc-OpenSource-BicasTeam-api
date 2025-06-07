@@ -72,26 +72,24 @@ public class ProfileController {
     }
 
     @PutMapping("/email/{email}/password/{password}")
-    public ResponseEntity<ProfileResource> updateProfile(@PathVariable String email, @PathVariable String password,
-                                                         @RequestBody CreateProfileResource resource) {
-        Optional<Profile> existingProfile = profileQueryService.findByEmailAndPassword(email, password);
-        if (existingProfile.isPresent()) {
-            Profile profile = existingProfile.get();
+    public ResponseEntity<ProfileResource> updateProfile(
+            @PathVariable String email, @PathVariable String password,
+            @RequestBody CreateProfileResource r) {
 
-            // Actualiza solo los campos necesarios
-            profile.setName(resource.name());
-            profile.setLastName(resource.lastName());
-            profile.setEmail(resource.email());
-            profile.setPassword(resource.password()); // Encriptar la contraseña si es necesario
-
-            // Guarda el perfil actualizado
-            profileRepository.save(profile);
-
-            // Retorna el recurso actualizado
-            return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile));
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return profileQueryService.findByEmailAndPassword(email, password)
+                .map(profile -> {
+                    profile.setName(r.name());
+                    profile.setLastName(r.lastName());
+                    profile.setEmail(r.email());
+                    profile.setPassword(r.password());
+                    profile.setPhone(r.phone());
+                    profile.setCompanyName(r.companyName());
+                    profile.setCompanyRuc(r.companyRuc());
+                    profile.setProfilePhoto(r.profilePhoto());
+                    profileRepository.save(profile);
+                    return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile));
+                })
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
 
