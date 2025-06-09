@@ -35,4 +35,16 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     public void deleteById(int id) {
         reportRepository.deleteById(id);
     }
+    // Nuevo método de búsqueda
+    @Override
+    public Optional<Report> findById(int id) {
+        return reportRepository.findById(id);
+    }
+
+    // Nuevo método de guardado/actualización
+    @Override
+    @Transactional
+    public Report save(Report report) {
+        return reportRepository.save(report);
+    }
 }

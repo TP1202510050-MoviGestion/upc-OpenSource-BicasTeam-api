@@ -41,5 +41,11 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         return false;
     }
 
+    @Override
+    @Transactional
+    public Profile save(Profile p) {
+        return profileRepository.save(p);
+    }
+
 }
 

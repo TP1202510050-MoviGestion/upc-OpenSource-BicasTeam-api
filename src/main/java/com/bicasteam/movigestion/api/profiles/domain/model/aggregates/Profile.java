@@ -24,6 +24,7 @@ public class Profile {
     private String companyName;    // Razón social
     private String companyRuc;     // RUC / NIT
     @Lob
+    @Column(name = "profile_photo", columnDefinition = "LONGTEXT")
     private String profilePhoto;   // URL o Base64
 
     public Profile(CreateProfileCommand cmd) {

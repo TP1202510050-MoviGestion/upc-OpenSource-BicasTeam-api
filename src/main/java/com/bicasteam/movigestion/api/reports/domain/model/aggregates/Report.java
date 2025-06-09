@@ -25,12 +25,68 @@ public class Report {
     private LocalDateTime dateTime;
     private String driverName;
 
+    @Lob
+    @Column(name = "photo_or_video", columnDefinition = "LONGTEXT")
+    private String photoOrVideo;
+
+    private String status;
+    private String location;
+    private String vehiclePlate;
+
+    // Campos de empresa
+    private String companyName;
+    private String companyRuc;
+
     public Report(CreateReportCommand command) {
-        this.userId = 1; // Asigna un valor por defecto o lógica específica si es necesario
-        this.type = command.type();
-        this.description = command.description();
-        this.createdAt = LocalDateTime.now();
-        this.dateTime = LocalDateTime.now();
-        this.driverName = command.driverName();
+        this.userId        = command.userId();
+        this.type          = command.type();
+        this.description   = command.description();
+        this.createdAt     = LocalDateTime.now();
+        this.dateTime      = LocalDateTime.now();
+        this.driverName    = command.driverName();
+        this.photoOrVideo  = command.photoOrVideo();
+        this.status        = command.status();
+        this.location      = command.location();
+        this.vehiclePlate  = command.vehiclePlate();
+        this.companyName   = command.companyName();
+        this.companyRuc    = command.companyRuc();
+    }
+
+    // --- Setters para los campos que pueden actualizarse ---
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setDriverName(String driverName) {
+        this.driverName = driverName;
+    }
+
+    public void setPhotoOrVideo(String photoOrVideo) {
+        this.photoOrVideo = photoOrVideo;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public void setVehiclePlate(String vehiclePlate) {
+        this.vehiclePlate = vehiclePlate;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public void setCompanyRuc(String companyRuc) {
+        this.companyRuc = companyRuc;
     }
 }

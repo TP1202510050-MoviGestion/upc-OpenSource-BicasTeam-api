@@ -5,8 +5,10 @@ import com.bicasteam.movigestion.api.profiles.domain.model.commands.CreateProfil
 import com.bicasteam.movigestion.api.profiles.domain.repositories.ProfileRepository;
 import com.bicasteam.movigestion.api.profiles.domain.services.ProfileCommandService;
 import com.bicasteam.movigestion.api.profiles.domain.services.ProfileQueryService;
+import com.bicasteam.movigestion.api.profiles.interfaces.rest.resources.ChangePasswordResource;
 import com.bicasteam.movigestion.api.profiles.interfaces.rest.resources.CreateProfileResource;
 import com.bicasteam.movigestion.api.profiles.interfaces.rest.resources.ProfileResource;
+import com.bicasteam.movigestion.api.profiles.interfaces.rest.resources.UpdateProfileResource;
 import com.bicasteam.movigestion.api.profiles.interfaces.rest.transform.CreateProfileCommandFromResourceAssembler;
 import com.bicasteam.movigestion.api.profiles.interfaces.rest.transform.ProfileResourceFromEntityAssembler;
 import org.springframework.http.HttpStatus;
@@ -71,25 +73,52 @@ public class ProfileController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @PutMapping("/email/{email}/password/{password}")
+    /**
+     * 1) Actualización general (sin tocar password)
+     *    /api/profiles/{id}
+     */
+    @PutMapping("/{id}")
     public ResponseEntity<ProfileResource> updateProfile(
-            @PathVariable String email, @PathVariable String password,
-            @RequestBody CreateProfileResource r) {
+            @PathVariable Long id,
+            @RequestBody UpdateProfileResource upd
+    ) {
+        Optional<Profile> maybe = profileQueryService.findById(id);
+        if (maybe.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Profile p = maybe.get();
+        // Solo campos no sensibles:
+        p.setName(upd.name());
+        p.setLastName(upd.lastName());
+        p.setEmail(upd.email());
+        p.setPhone(upd.phone());
+        p.setCompanyName(upd.companyName());
+        p.setCompanyRuc(upd.companyRuc());
+        p.setProfilePhoto(upd.profilePhoto());
+        profileCommandService.save(p);  // asumiendo que .save() guarda o actualiza
+        return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(p));
+    }
 
-        return profileQueryService.findByEmailAndPassword(email, password)
-                .map(profile -> {
-                    profile.setName(r.name());
-                    profile.setLastName(r.lastName());
-                    profile.setEmail(r.email());
-                    profile.setPassword(r.password());
-                    profile.setPhone(r.phone());
-                    profile.setCompanyName(r.companyName());
-                    profile.setCompanyRuc(r.companyRuc());
-                    profile.setProfilePhoto(r.profilePhoto());
-                    profileRepository.save(profile);
-                    return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile));
-                })
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    /**
+     * 2) Cambio de contraseña (requiere validar email+oldPassword)
+     *    /api/profiles/password
+     */
+    @PatchMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @RequestBody ChangePasswordResource req
+    ) {
+        // Validamos credenciales actuales
+        Optional<Profile> maybe = profileQueryService
+                .findByEmailAndPassword(req.email(), req.oldPassword());
+        if (maybe.isEmpty()) {
+            // credenciales inválidas
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Profile p = maybe.get();
+        // aplicamos nuevo password
+        p.setPassword(req.newPassword());
+        profileCommandService.save(p);
+        return ResponseEntity.ok().build();
     }
 
 

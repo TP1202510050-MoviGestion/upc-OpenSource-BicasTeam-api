@@ -10,7 +10,6 @@ import com.bicasteam.movigestion.api.reports.interfaces.rest.resources.CreateRep
 import com.bicasteam.movigestion.api.reports.interfaces.rest.resources.ReportResource;
 import com.bicasteam.movigestion.api.reports.interfaces.rest.transform.CreateReportCommandFromResourceAssembler;
 import com.bicasteam.movigestion.api.reports.interfaces.rest.transform.ReportResourceFromEntityAssembler;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,48 +22,84 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/reports")
 public class ReportController {
 
-    private final ReportCommandService reportCommandService;
-    private final ReportQueryService reportQueryService;
+    private final ReportCommandService commandService;
+    private final ReportQueryService   queryService;
 
-    public ReportController(ReportCommandService reportCommandService, ReportQueryService reportQueryService) {
-        this.reportCommandService = reportCommandService;
-        this.reportQueryService = reportQueryService;
+    public ReportController(ReportCommandService commandService,
+                            ReportQueryService queryService) {
+        this.commandService = commandService;
+        this.queryService   = queryService;
     }
 
     @PostMapping
-    public ResponseEntity<ReportResource> createReport(@RequestBody CreateReportResource resource) {
-        CreateReportCommand command = CreateReportCommandFromResourceAssembler.toCommandFromResource(resource);
-        Optional<Report> result = reportCommandService.handle(command);
-        return result.map(report -> ResponseEntity.ok(new ReportResource(
-                        report.getId(),
-                        report.getType(),
-                        report.getDescription(),
-                        report.getUserId(),
-                        report.getCreatedAt(),
-                        report.getDriverName()
-                )))
+    public ResponseEntity<ReportResource> createReport(
+            @RequestBody CreateReportResource resource) {
+        CreateReportCommand cmd =
+                CreateReportCommandFromResourceAssembler.toCommandFromResource(resource);
+
+        Optional<ReportResource> saved = commandService
+                .handle(cmd)
+                .map(ReportResourceFromEntityAssembler::toResourceFromEntity);
+
+        return saved
+                .map(r -> ResponseEntity.status(HttpStatus.CREATED).body(r))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReportResource> getReportById(@PathVariable int id) {
-        Optional<Report> result = reportQueryService.handle(new GetReportByIdQuery(id));
-        return result.map(report -> ResponseEntity.ok(ReportResourceFromEntityAssembler.toResourceFromEntity(report)))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<ReportResource> getById(@PathVariable int id) {
+        return queryService
+                .handle(new GetReportByIdQuery(id))
+                .map(ReportResourceFromEntityAssembler::toResourceFromEntity)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<ReportResource>> getAllShipments() {
-        List<Report> report = reportQueryService.handle(new GetAllReportsQuery());
-        List<ReportResource> resources = report.stream()
+    public ResponseEntity<List<ReportResource>> getAll() {
+        List<ReportResource> list = queryService.handle(new GetAllReportsQuery())
+                .stream()
                 .map(ReportResourceFromEntityAssembler::toResourceFromEntity)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(resources);
+        return ResponseEntity.ok(list);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReport(@PathVariable int id) {
-        reportCommandService.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable int id) {
+        commandService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ReportResource> updateReport(
+            @PathVariable int id,
+            @RequestBody CreateReportResource resource) {
+
+        // 1) verificamos que exista
+        Optional<Report> opt = commandService.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 2) actualizamos los campos
+        Report report = opt.get();
+        report.setType(          resource.type());
+        report.setDescription(   resource.description());
+        report.setDriverName(    resource.driverName());
+        report.setPhotoOrVideo(  resource.photoOrVideo());
+        report.setStatus(        resource.status());
+        report.setLocation(      resource.location());
+        report.setVehiclePlate(  resource.vehiclePlate());
+        report.setCompanyName(   resource.companyName());
+        report.setCompanyRuc(    resource.companyRuc());
+        // no tocamos createdAt ni userId
+
+        Report updated = commandService.save(report);
+
+        // 3) devolvemos el recurso actualizado
+        ReportResource out =
+                ReportResourceFromEntityAssembler.toResourceFromEntity(updated);
+        return ResponseEntity.ok(out);
+    }
+
 }

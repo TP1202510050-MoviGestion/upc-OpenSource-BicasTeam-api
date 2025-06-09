@@ -1,13 +1,18 @@
 package com.bicasteam.movigestion.api.reports.interfaces.rest.resources;
 
-
 import java.time.LocalDateTime;
 
 public record ReportResource(
-        int id,
-        String type,
-        String description,
-        int userId,
+        int          id,
+        int          userId,
+        String       type,
+        String       description,
+        String       driverName,
         LocalDateTime createdAt,
-        String driverName
+        String       photoOrVideo,
+        String       status,
+        String       location,
+        String       vehiclePlate,
+        String       companyName,
+        String       companyRuc
 ) { }

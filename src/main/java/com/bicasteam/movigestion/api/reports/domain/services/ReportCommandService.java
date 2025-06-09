@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface ReportCommandService {
     Optional<Report> handle(CreateReportCommand command);
     void deleteById(int id); // Nuevo método
+    Optional<Report> findById(int id);
+    Report save(Report report);
 }
