@@ -1,25 +1,19 @@
 package com.bicasteam.movigestion.api.vehicles.interfaces.rest.transform;
-
 import com.bicasteam.movigestion.api.vehicles.domain.model.aggregates.Vehicle;
 import com.bicasteam.movigestion.api.vehicles.interfaces.rest.resources.VehicleResource;
 
 public class VehicleResourceFromEntityAssembler {
-    public static VehicleResource toResourceFromEntity(Vehicle entity) {
+    public static VehicleResource toResourceFromEntity(Vehicle v) {
         return new VehicleResource(
-                entity.getId(),
-                entity.getIdUser(),
-                entity.getLicensePlate(),
-                entity.getModel(),
-                entity.getEngine(),
-                entity.getFuel(),
-                entity.getTires(),
-                entity.getElectricalSystem(),
-                entity.getTransmissionTemperature(),
-                entity.getDriverName(),
-                entity.getVehicleImage(),
-                entity.getColor(),
-                entity.getLastTechnicalInspectionDate(),
-                entity.getCreatedAt()
+                v.getId(),
+                v.getLicensePlate(), v.getBrand(), v.getModel(), v.getYear(), v.getColor(), v.getSeatingCapacity(),
+                v.getLastTechnicalInspectionDate(),
+                v.getGpsSensorId(), v.getSpeedSensorId(),
+                v.getStatus(), v.getDriverName(), v.getAssignedDriverId(), v.getAssignedAt(),
+                v.getVehicleImage(), v.getDocumentSoat(), v.getDocumentVehicleOwnershipCard(),
+                v.getDateToGoTheWorkshop(), v.getCompanyName(), v.getCompanyRuc(),
+                v.getLastLatitude(), v.getLastLongitude(), v.getLastLocationTimestamp(),
+                v.getLastKmh(), v.getLastSpeedTimestamp()
         );
     }
 }

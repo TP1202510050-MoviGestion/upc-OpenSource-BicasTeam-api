@@ -22,67 +22,76 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/vehicles")
 public class VehicleController {
 
-    private final VehicleCommandService vehicleCommandService;
-    private final VehicleQueryService vehicleQueryService;
+    private final VehicleCommandService commandService;
+    private final VehicleQueryService   queryService;
 
-    public VehicleController(VehicleCommandService vehicleCommandService, VehicleQueryService vehicleQueryService) {
-        this.vehicleCommandService = vehicleCommandService;
-        this.vehicleQueryService = vehicleQueryService;
+    public VehicleController(VehicleCommandService cs, VehicleQueryService qs) {
+        this.commandService = cs;
+        this.queryService   = qs;
     }
 
     @PostMapping
-    public ResponseEntity<VehicleResource> createVehicle(@RequestBody CreateVehicleResource resource) {
-        CreateVehicleCommand command = CreateVehicleCommandFromResourceAssembler.toCommandFromResource(resource);
-        Optional<Vehicle> result = vehicleCommandService.handle(command);
-        return result.map(vehicle -> ResponseEntity.ok(VehicleResourceFromEntityAssembler.toResourceFromEntity(vehicle)))
+    public ResponseEntity<VehicleResource> create(@RequestBody CreateVehicleResource r) {
+        CreateVehicleCommand cmd = CreateVehicleCommandFromResourceAssembler.toCommandFromResource(r);
+        Optional<Vehicle> saved = commandService.handle(cmd);
+        return saved
+                .map(v -> new ResponseEntity<>(VehicleResourceFromEntityAssembler.toResourceFromEntity(v), HttpStatus.CREATED))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VehicleResource> getVehicleById(@PathVariable int id) {
-        Optional<Vehicle> result = vehicleQueryService.handle(new GetVehicleByIdQuery(id));
-        return result.map(vehicle -> ResponseEntity.ok(VehicleResourceFromEntityAssembler.toResourceFromEntity(vehicle)))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<VehicleResource> getById(@PathVariable int id) {
+        return queryService.handle(new GetVehicleByIdQuery(id))
+                .map(v -> ResponseEntity.ok(VehicleResourceFromEntityAssembler.toResourceFromEntity(v)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<VehicleResource>> getAllVehicles() {
-        List<Vehicle> vehicles = vehicleQueryService.handle(new GetAllVehiclesQuery());
-        List<VehicleResource> resources = vehicles.stream()
+    public ResponseEntity<List<VehicleResource>> getAll() {
+        List<VehicleResource> list = queryService.handle(new GetAllVehiclesQuery())
+                .stream()
                 .map(VehicleResourceFromEntityAssembler::toResourceFromEntity)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(resources);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVehicle(@PathVariable int id) {
-        vehicleCommandService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(list);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VehicleResource> updateVehicle(@PathVariable int id, @RequestBody CreateVehicleResource resource) {
-        Optional<Vehicle> existingVehicle = vehicleQueryService.handle(new GetVehicleByIdQuery(id));
-        if (existingVehicle.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<VehicleResource> update(
+            @PathVariable int id,
+            @RequestBody CreateVehicleResource r
+    ) {
+        Optional<Vehicle> opt = queryService.handle(new GetVehicleByIdQuery(id));
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
 
-        Vehicle updatedVehicle = existingVehicle.get();
-        updatedVehicle.setLicensePlate(resource.licensePlate());
-        updatedVehicle.setModel(resource.model());
-        updatedVehicle.setEngine(resource.engine());
-        updatedVehicle.setFuel(resource.fuel());
-        updatedVehicle.setTires(resource.tires());
-        updatedVehicle.setElectricalSystem(resource.electricalSystem());
-        updatedVehicle.setTransmissionTemperature(resource.transmissionTemperature());
-        updatedVehicle.setDriverName(resource.driverName());
-        updatedVehicle.setVehicleImage(resource.vehicleImage());
-        updatedVehicle.setColor(resource.color());
-        updatedVehicle.setLastTechnicalInspectionDate(resource.lastTechnicalInspectionDate());
+        Vehicle v = opt.get();
+        // -- actualizamos todos los campos permitidos --
+        v.setLicensePlate(r.licensePlate());
+        v.setBrand(r.brand());
+        v.setModel(r.model());
+        v.setYear(r.year());
+        v.setColor(r.color());
+        v.setSeatingCapacity(r.seatingCapacity());
+        v.setLastTechnicalInspectionDate(r.lastTechnicalInspectionDate());
+        v.setGpsSensorId(r.gpsSensorId());
+        v.setSpeedSensorId(r.speedSensorId());
+        v.setStatus(r.status());
+        v.setDriverName(r.driverName());
+        v.setCompanyName(r.companyName());
+        v.setCompanyRuc(r.companyRuc());
+        v.setAssignedDriverId(r.assignedDriverId());
+        v.setAssignedAt(r.assignedAt());
+        v.setVehicleImage(r.vehicleImage());
+        v.setDocumentSoat(r.documentSoat());
+        v.setDocumentVehicleOwnershipCard(r.documentVehicleOwnershipCard());
+        v.setDateToGoTheWorkshop(r.dateToGoTheWorkshop());
+        commandService.save(v);
 
-        vehicleCommandService.save(updatedVehicle);
-
-        return ResponseEntity.ok(VehicleResourceFromEntityAssembler.toResourceFromEntity(updatedVehicle));
+        return ResponseEntity.ok(VehicleResourceFromEntityAssembler.toResourceFromEntity(v));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable int id) {
+        commandService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

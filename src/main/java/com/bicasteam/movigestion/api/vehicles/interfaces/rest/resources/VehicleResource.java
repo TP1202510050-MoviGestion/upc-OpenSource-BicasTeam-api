@@ -1,20 +1,34 @@
 package com.bicasteam.movigestion.api.vehicles.interfaces.rest.resources;
-
 import java.time.LocalDateTime;
 
 public record VehicleResource(
         int id,
-        int userId,
         String licensePlate,
+        String brand,
         String model,
-        int engine,
-        int fuel,
-        int tires,
-        int electricalSystem,
-        int transmissionTemperature,
-        String driverName,
-        String vehicleImage,
+        int year,
         String color,
+        int seatingCapacity,
         LocalDateTime lastTechnicalInspectionDate,
-        LocalDateTime createdAt
+        String gpsSensorId,
+        String speedSensorId,
+        String status,
+        String driverName,
+
+        Integer assignedDriverId,
+        LocalDateTime assignedAt,
+        String vehicleImage,
+        String documentSoat,
+        String documentVehicleOwnershipCard,
+        LocalDateTime dateToGoTheWorkshop,
+
+        String companyName,
+        String companyRuc,
+
+        // Telemetría
+        Double lastLatitude,
+        Double lastLongitude,
+        LocalDateTime lastLocationTimestamp,
+        Double lastKmh,
+        LocalDateTime lastSpeedTimestamp
 ) {}

@@ -32,6 +32,6 @@ public class VehicleQueryServiceImpl implements VehicleQueryService {
 
     @Override
     public List<Vehicle> handle(GetVehicleByUserIdQuery query) {
-        return vehicleRepository.findByIdUser(query.userId());
+        return vehicleRepository.findByAssignedDriverId(query.userId());
     }
 }
