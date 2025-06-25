@@ -7,6 +7,7 @@ import com.bicasteam.movigestion.api.vehicles.domain.model.queries.GetVehicleByI
 import com.bicasteam.movigestion.api.vehicles.domain.services.VehicleCommandService;
 import com.bicasteam.movigestion.api.vehicles.domain.services.VehicleQueryService;
 import com.bicasteam.movigestion.api.vehicles.interfaces.rest.resources.CreateVehicleResource;
+import com.bicasteam.movigestion.api.vehicles.interfaces.rest.resources.TelemetryUpdateResource;
 import com.bicasteam.movigestion.api.vehicles.interfaces.rest.resources.VehicleResource;
 import com.bicasteam.movigestion.api.vehicles.interfaces.rest.transform.CreateVehicleCommandFromResourceAssembler;
 import com.bicasteam.movigestion.api.vehicles.interfaces.rest.transform.VehicleResourceFromEntityAssembler;
@@ -29,6 +30,8 @@ public class VehicleController {
         this.commandService = cs;
         this.queryService   = qs;
     }
+
+    /*────────────  CRUD básico  ────────────*/
 
     @PostMapping
     public ResponseEntity<VehicleResource> create(@RequestBody CreateVehicleResource r) {
@@ -64,7 +67,7 @@ public class VehicleController {
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
 
         Vehicle v = opt.get();
-        // -- actualizamos todos los campos permitidos --
+        /*─ campos de negocio ─*/
         v.setLicensePlate(r.licensePlate());
         v.setBrand(r.brand());
         v.setModel(r.model());
@@ -93,5 +96,43 @@ public class VehicleController {
     public ResponseEntity<Void> delete(@PathVariable int id) {
         commandService.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /*────────────  NUEVO ENDPOINT – Telemetría  ────────────*/
+
+    /**
+     * Recibe la última muestra de sensores de un vehículo y la persiste
+     * (equivalente a lo que enviaría el micro-servicio /gateway IoT).
+     *
+     * PUT /api/vehicles/{id}/telemetry
+     */
+    @PutMapping("/{id}/telemetry")
+    public ResponseEntity<VehicleResource> updateTelemetry(
+            @PathVariable int id,
+            @RequestBody TelemetryUpdateResource t
+    ) {
+        Optional<Vehicle> opt = queryService.handle(new GetVehicleByIdQuery(id));
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+
+        Vehicle v = opt.get();
+        /*── datos ambientales ─*/
+        v.setLastTemperature(t.temperature());
+        v.setLastHumidity(t.humidity());
+
+        /*── posición ─*/
+        v.setLastLatitude(t.latitude());
+        v.setLastLongitude(t.longitude());
+        v.setLastAltitudeMeters(t.altitudeMeters());
+
+        /*── velocidad ─*/
+        v.setLastKmh(t.speedKmph());
+
+        /*── marca temporal ─*/
+        v.setLastTelemetryTimestamp(t.timestampUtc());
+
+        commandService.save(v);
+        return ResponseEntity.ok(
+                VehicleResourceFromEntityAssembler.toResourceFromEntity(v)
+        );
     }
 }
