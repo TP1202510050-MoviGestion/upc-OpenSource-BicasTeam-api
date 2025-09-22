@@ -20,13 +20,13 @@ public class Route {
 
     // ——— Datos de negocio ———
     @Column(nullable = false)
-    private String type;            // regular | backup ...
+    private String type;
     @Column(nullable = false)
-    private String customer;        // Gloria, Trupal…
+    private String customer;
     @Column(nullable = false)
-    private String nameRoute;       // “SJL – Portón”, etc.
-    private String status;          // scheduled | in_progress | completed
-    private String shift;           // mañana / tarde / noche
+    private String nameRoute;
+    private String status;
+    private String shift;
 
     // ——— Asignaciones ———
     private Integer driverId;
@@ -40,7 +40,7 @@ public class Route {
 
     // ——— Waypoints en JSON ———
     @Lob @Column(columnDefinition = "LONGTEXT")
-    private String waypoints;       // JSON array
+    private String waypoints;
 
     // ——— Telemetría actual ———
     private Double lastLatitude;

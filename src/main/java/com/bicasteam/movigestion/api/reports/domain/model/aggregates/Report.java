@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 public class Report {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -24,7 +23,6 @@ public class Report {
     private LocalDateTime createdAt;
     private LocalDateTime dateTime;
     private String driverName;
-
     @Lob
     @Column(name = "photo_or_video", columnDefinition = "LONGTEXT")
     private String photoOrVideo;
@@ -33,7 +31,6 @@ public class Report {
     private String location;
     private String vehiclePlate;
 
-    // Campos de empresa
     private String companyName;
     private String companyRuc;
 
