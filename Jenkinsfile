@@ -1,13 +1,9 @@
 pipeline {
-    // Definimos el agente (máquina) donde se ejecutará el pipeline.
-    // Necesita tener JDK 17 y Maven instalados.
     agent any
 
-    // Variables de entorno con tus datos específicos.
     environment {
         AZURE_APP_NAME = 'app-250626000818'
-        AZURE_RESOURCE_GROUP = 'rg-app-250626000818' // Confirmado desde tu captura
-        AZURE_CREDENTIALS_ID = 'azure-service-principal' // Este es el ID que crearás en Jenkins
+        AZURE_RESOURCE_GROUP = 'rg-app-250626000818'
     }
 
     stages {
@@ -21,15 +17,14 @@ pipeline {
         stage('2. Build & White-Box Tests') {
             steps {
                 echo 'Ejecutando pruebas de caja blanca (unitarias y de integración)...'
-                // Comando para limpiar, testear y empaquetar la aplicación
-                sh './mvnw clean package'
+                // Para Windows, usamos 'mvnw.cmd'
+                bat 'mvnw.cmd clean package'
             }
         }
 
         stage('3. Archive Artifacts') {
             steps {
                 echo 'Archivando el artefacto JAR para el despliegue...'
-                // Guarda el JAR generado para que la etapa de despliegue pueda usarlo
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
@@ -37,14 +32,9 @@ pipeline {
         stage('4. Deploy to Azure') {
             steps {
                 echo "Desplegando en Azure Web App: ${AZURE_APP_NAME}..."
-                // Este paso utiliza el plugin de Azure CLI en Jenkins
-                // y se autentica usando las credenciales que crearás.
-                
- {     // TU TENANT ID
-                    sh """
-                        az webapp deploy --resource-group ${AZURE_RESOURCE_GROUP} --name ${AZURE_APP_NAME} --src-path target/*.jar --type jar
-                    """
-                }
+                // Este comando usará la sesión que ya iniciaste con 'az login'
+                // Para Windows, usamos 'az.cmd'
+                bat "az.cmd webapp deploy --resource-group ${AZURE_RESOURCE_GROUP} --name ${AZURE_APP_NAME} --src-path target/*.jar --type jar"
             }
         }
     }
