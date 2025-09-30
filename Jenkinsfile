@@ -39,9 +39,8 @@ pipeline {
                 echo "Desplegando en Azure Web App: ${AZURE_APP_NAME}..."
                 // Este paso utiliza el plugin de Azure CLI en Jenkins
                 // y se autentica usando las credenciales que crearás.
-                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID,
-                                                       subscriptionId: 'e1a73935-816a-4942-97fe-cfdcee794e6f', // TU ID DE SUSCRIPCIÓN
-                                                       tenantId: '0e0cb060-09ad-49f5-a005-68b9b49aa1f6')]) {     // TU TENANT ID
+                
+ {     // TU TENANT ID
                     sh """
                         az webapp deploy --resource-group ${AZURE_RESOURCE_GROUP} --name ${AZURE_APP_NAME} --src-path target/*.jar --type jar
                     """
