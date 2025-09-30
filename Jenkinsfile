@@ -1,10 +1,6 @@
 pipeline {
+    // El agente necesita JDK 17 y Maven
     agent any
-
-    environment {
-        AZURE_APP_NAME = 'app-250626000818'
-        AZURE_RESOURCE_GROUP = 'rg-app-250626000818'
-    }
 
     stages {
         stage('1. Checkout Code') {
@@ -17,31 +13,21 @@ pipeline {
         stage('2. Build & White-Box Tests') {
             steps {
                 echo 'Ejecutando pruebas de caja blanca (unitarias y de integración)...'
-                // Para Windows, usamos 'mvnw.cmd'
-                bat 'mvnw.cmd clean package'
-            }
-        }
-
-        stage('3. Archive Artifacts') {
-            steps {
-                echo 'Archivando el artefacto JAR para el despliegue...'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
-
-        stage('4. Deploy to Azure') {
-            steps {
-                echo "Desplegando en Azure Web App: ${AZURE_APP_NAME}..."
-                // Este comando usará la sesión que ya iniciaste con 'az login'
-                // Para Windows, usamos 'az.cmd'
-                bat "az.cmd webapp deploy --resource-group ${AZURE_RESOURCE_GROUP} --name ${AZURE_APP_NAME} --src-path target/*.jar --type jar"
+                // El comando 'test' es suficiente para compilar y correr las pruebas.
+                // Si falla, el pipeline se detendrá aquí.
+                bat 'mvnw.cmd clean test'
             }
         }
     }
 
     post {
+        // Se ejecuta al final, sin importar el resultado.
         always {
-            echo 'Pipeline finalizado.'
+            // El 'junit' step busca los reportes de resultados de las pruebas
+            // generados por Maven y los muestra en la interfaz de Jenkins.
+            junit 'target/surefire-reports/*.xml'
+
+            echo 'Pipeline de pruebas finalizado.'
             cleanWs()
         }
     }
